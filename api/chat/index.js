@@ -17,8 +17,8 @@ export default async function (context, req) {
   );
 
   // Replace these with your actual values
-  const foundryEndpoint = "https://YOUR-FOUNDRY-RESOURCE.api.azure.com";
-  const agentId = "YOUR-AGENT-ID";
+  const foundryEndpoint = "https://dadvr-foundry.services.ai.azure.com/";
+  const agentId = "3149979d-2319-470a-84ae-063950a0a841";
 
   const response = await fetch(
     `${foundryEndpoint}/agents/${agentId}/invoke?api-version=2024-10-01-preview`,
