@@ -1,1 +1,37 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>DadVR Chatbot</title>
+    <style>
+      body { font-family: Arial; max-width: 600px; margin: 40px auto; }
+      textarea { width: 100%; height: 120px; }
+      pre { background: #f4f4f4; padding: 10px; white-space: pre-wrap; }
+    </style>
+  </head>
+  <body>
+    <h2>DadVR Chatbot</h2>
 
+    <textarea id="input" placeholder="Type your message..."></textarea>
+    <br><br>
+    <button onclick="send()">Send</button>
+
+    <h3>Response:</h3>
+    <pre id="output"></pre>
+
+    <script>
+      async function send() {
+        const message = document.getElementById("input").value;
+
+        const res = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message })
+        });
+
+        const data = await res.json();
+        document.getElementById("output").textContent =
+          data?.output_text || JSON.stringify(data, null, 2);
+      }
+    </script>
+  </body>
+</html>
