@@ -1,5 +1,5 @@
 module.exports = async function (context, req) {
-    context.log('DadVR Proxy - final fix with model');
+    context.log('DadVR Proxy - agent_reference at top level');
 
     const message = req.body && req.body.message ? req.body.message.trim() : '';
 
@@ -9,8 +9,7 @@ module.exports = async function (context, req) {
     }
 
     try {
- const API_KEY = "8FpcVRioyCoyx0G0Ckc4CpAYjLlfQ99irTAnT33BVDw6o5iyU8gtJQQJ99CDACYeBjFXJ3w3AAAAACOGBRSW";   // ← Replace this line with your real key
-
+        const API_KEY = "8FpcVRioyCoyx0G0Ckc4CpAYjLlfQ99irTAnT33BVDw6o5iyU8gtJQQJ99CDACYeBjFXJ3w3AAAAACOGBRSW";   // ← your key is already here
 
         const PROJECT_ENDPOINT = "https://dadvr-foundry.services.ai.azure.com/api/projects/dadvr-chatbot";
 
@@ -21,14 +20,12 @@ module.exports = async function (context, req) {
                 'api-key': API_KEY
             },
             body: JSON.stringify({
-                model: "gpt-4o",                                   // ← This was missing
+                model: "gpt-4o",
                 input: [{ role: "user", content: message }],
-                extra_body: {
-                    agent_reference: {
-                        name: "DadVRchatbot",
-                        version: "3",
-                        type: "agent_reference"
-                    }
+                agent_reference: {                  // ← moved to top level
+                    name: "DadVRchatbot",
+                    version: "3",
+                    type: "agent_reference"
                 }
             })
         });
