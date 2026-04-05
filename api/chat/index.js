@@ -1,5 +1,5 @@
 module.exports = async function (context, req) {
-    context.log('DadVR Proxy - minimal echo version');
+    context.log('DadVR Proxy started');
 
     const message = req.body && req.body.message ? req.body.message.trim() : '';
 
@@ -8,12 +8,11 @@ module.exports = async function (context, req) {
         return;
     }
 
-    // Simple echo to confirm the proxy is alive
+    // Echo reply to prove the proxy works
     context.res = {
         status: 200,
         body: {
-            reply: `✅ Proxy is running!\n\nYou said: "${message}"\n\n(DadVRchatbot real response will appear here next.)`,
-            threadId: "test-" + Date.now()
+            reply: `✅ The proxy is working!\n\nYou asked: "${message}"\n\nReal DadVRchatbot response will appear here once connected.`
         }
     };
 };
