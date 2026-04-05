@@ -37,15 +37,15 @@ module.exports = async function (context, req) {
 
         const data = await response.json();
 
-        // Clean, reliable extraction based on the exact structure you showed
+        // === CLEAN REPLY EXTRACTION ===
         let reply = "DadVRchatbot had no response.";
 
         if (data.content && Array.isArray(data.content) && data.content.length > 0) {
             const firstContent = data.content[0];
-            if (firstContent && firstContent.text) {
-                reply = firstContent.text;
+            if (firstContent && typeof firstContent.text === 'string') {
+                reply = firstContent.text;                    // ← This is where your text lives
             }
-        } else if (data.output_text) {
+        } else if (typeof data.output_text === 'string') {
             reply = data.output_text;
         } else if (data.output && Array.isArray(data.output) && data.output[0]) {
             reply = data.output[0].content || JSON.stringify(data.output[0]);
