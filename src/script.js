@@ -1,7 +1,7 @@
 let threadId = null;   // Keep this at the top of script.js (outside any function)
 
 const agentId = "3149979d-2319-470a-84ae-063950a0a841";
-const PROJECT_ENDPOINT = "https://dadvr-foundry.services.ai.azure.com/api/projects/dadvr-foundry";
+const PROJECT_ENDPOINT =  "https://dadvr-foundry.services.ai.azure.com/api/projects/dadvr-chatbot";
 
 async function sendMessage() {
     const input = document.getElementById('userInput');
