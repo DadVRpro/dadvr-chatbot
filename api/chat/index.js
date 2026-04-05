@@ -1,5 +1,5 @@
 module.exports = async function (context, req) {
-    context.log('DadVR Proxy - simple extraction');
+    context.log('DadVR Proxy - robust JSON parser');
 
     const message = req.body && req.body.message ? req.body.message.trim() : '';
 
@@ -37,14 +37,23 @@ module.exports = async function (context, req) {
 
         const data = await response.json();
 
-        // Simple and direct extraction for your exact response structure
+        // Robust parsing for the structure you showed
         let reply = "DadVRchatbot had no response.";
 
         if (data.content && Array.isArray(data.content) && data.content.length > 0) {
-            const contentItem = data.content[0];
-            if (contentItem && contentItem.text) {
-                reply = contentItem.text;   // ← This is exactly what you want
+            const item = data.content[0];
+            if (item && item.text) {
+                reply = item.text;
+            } else if (item) {
+                reply = JSON.stringify(item);
             }
+        } else if (data.output_text) {
+            reply = data.output_text;
+        } else if (data.output && Array.isArray(data.output) && data.output[0]) {
+            reply = data.output[0].content || JSON.stringify(data.output[0]);
+        } else {
+            // Ultimate fallback: pretty-print the whole thing
+            reply = JSON.stringify(data, null, 2);
         }
 
         context.res = { status: 200, body: { reply: reply } };
