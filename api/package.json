@@ -1,5 +1,7 @@
 {
   "name": "dadvr-chat-api",
   "version": "1.0.0",
-  "dependencies": {}
+  "dependencies": {
+    "@azure/identity": "^4.0.0"
+  }
 }
