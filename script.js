@@ -1,62 +1,69 @@
-// === YOUR FOUNDRY DETAILS ===
-const foundryBase = "https://dadvr-foundry.api.azure.com";   // Update if needed
-const agentId = "3149979d-2319-470a-84ae-063950a0a841";
-
-let threadId = null;
-
 async function sendMessage() {
     const input = document.getElementById('userInput');
     const messageText = input.value.trim();
-    
     if (!messageText) return;
 
-    // Add user message to UI
     addMessage(messageText, 'user');
     input.value = '';
 
+    // === UPDATE THESE TWO LINES WITH YOUR REAL VALUES ===
+    const PROJECT_ENDPOINT = "https://dadvr-foundry.services.ai.azure.com/api/projects/YOUR_PROJECT_NAME_HERE";  // ← CHANGE THIS
+    const apiVersion = "2025-05-01";  // or "2025-11-15-preview" — try both if needed
+
     try {
-        const response = await fetch(`${foundryBase}/openai/threads/runs`, {   // This is a common pattern — we may need to adjust
+        // Step 1: Create or use existing thread
+        let currentThreadId = threadId;
+        if (!currentThreadId) {
+            const threadRes = await fetch(`${PROJECT_ENDPOINT}/threads?api-version=${apiVersion}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const threadData = await threadRes.json();
+            currentThreadId = threadData.id;
+            threadId = currentThreadId;
+        }
+
+        // Step 2: Add user message
+        await fetch(`${PROJECT_ENDPOINT}/threads/${currentThreadId}/messages?api-version=${apiVersion}`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                // Authorization will be handled later — for now this may fail (expected)
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                assistant_id: agentId,
-                thread: threadId ? { id: threadId } : null,
-                messages: [{ role: "user", content: messageText }]
+                role: "user",
+                content: messageText
             })
         });
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
+        // Step 3: Run the agent
+        const runRes = await fetch(`${PROJECT_ENDPOINT}/threads/${currentThreadId}/runs?api-version=${apiVersion}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                assistant_id: agentId   // your DadVRchatbot ID
+            })
+        });
+
+        if (!runRes.ok) {
+            throw new Error(`Run failed: ${runRes.status} ${await runRes.text()}`);
         }
 
-        const data = await response.json();
-        
-        // Save threadId for conversation continuity
-        if (data.thread_id) threadId = data.thread_id;
+        // For simplicity, we'll poll once (can be improved later)
+        const runData = await runRes.json();
+        // In a real implementation we'd poll the run status, but this is the minimal version
 
-        // Display the assistant reply
-        const reply = data.reply || data.content || "Sorry, I didn't get a response.";
+        // Get messages (simplified)
+        const msgsRes = await fetch(`${PROJECT_ENDPOINT}/threads/${currentThreadId}/messages?api-version=${apiVersion}`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const msgsData = await msgsRes.json();
+
+        const assistantMsg = msgsData.data?.find(m => m.role === "assistant");
+        const reply = assistantMsg?.content?.[0]?.text?.value || "No response from agent.";
+
         addMessage(reply, 'assistant');
 
     } catch (error) {
-        console.error(error);
-        addMessage("Sorry, I'm having trouble connecting right now. Please try again later.", 'assistant');
+        console.error("Full error:", error);
+        addMessage("Sorry, I'm having trouble connecting. Check the browser console (F12) for details.", 'assistant');
     }
 }
-
-function addMessage(text, sender) {
-    const chatWindow = document.getElementById('chatWindow');
-    const msgDiv = document.createElement('div');
-    msgDiv.className = `message ${sender}`;
-    msgDiv.textContent = text;
-    chatWindow.appendChild(msgDiv);
-    chatWindow.scrollTop = chatWindow.scrollHeight;
-}
-
-// Allow pressing Enter to send
-document.getElementById('userInput').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') sendMessage();
-});
