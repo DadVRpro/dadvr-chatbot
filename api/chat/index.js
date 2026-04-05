@@ -1,16 +1,16 @@
 module.exports = async function (context, req) {
-    context.log('DadVR Proxy - using API key');
+    context.log('DadVR Proxy - diagnostic version');
 
     const message = req.body && req.body.message ? req.body.message.trim() : '';
 
     if (!message) {
-        context.res = { status: 400, body: { error: "Message required" } };
+        context.res = { status: 400, body: { reply: "Please type a message." } };
         return;
     }
 
     try {
-        // === PASTE YOUR API KEY HERE ===
         const API_KEY = "8FpcVRioyCoyx0G0Ckc4CpAYjLlfQ99irTAnT33BVDw6o5iyU8gtJQQJ99CDACYeBjFXJ3w3AAAAACOGBRSW";   // ← Replace this line with your real key
+
 
         const PROJECT_ENDPOINT = "https://dadvr-foundry.services.ai.azure.com/api/projects/dadvr-chatbot";
         const agentName = "DadVRchatbot";
@@ -35,22 +35,23 @@ module.exports = async function (context, req) {
         });
 
         if (!response.ok) {
-            const errorText = await response.text().catch(() => "");
-            throw new Error(`Agent failed: ${response.status} ${errorText}`);
+            const errorText = await response.text().catch(() => "No error body");
+            context.log.error(`Raw error from Foundry: ${response.status} - ${errorText}`);
+            throw new Error(`Foundry returned ${response.status}: ${errorText}`);
         }
 
         const data = await response.json();
-        const reply = data.output_text || 
-                     (data.output && data.output[0] && data.output[0].content) || 
-                     "DadVRchatbot had no response.";
+        const reply = data.output_text || (data.output && data.output[0] && data.output[0].content) || "No response text.";
 
         context.res = { status: 200, body: { reply: reply } };
 
     } catch (err) {
-        context.log.error('Agent call error:', err);
+        context.log.error('Full error:', err.message);
         context.res = {
             status: 200,
-            body: { reply: "Sorry, DadVRchatbot is having trouble responding right now.\n\nPlease try again in a moment." }
+            body: { 
+                reply: `Error connecting to DadVRchatbot:\n${err.message}` 
+            }
         };
     }
 };
