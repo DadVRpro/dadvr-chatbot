@@ -1,8 +1,5 @@
-const { DefaultAzureCredential } = require('@azure/identity');
-const credential = new DefaultAzureCredential();
-
 module.exports = async function (context, req) {
-    context.log('DadVR Proxy - calling real agent with credential');
+    context.log('DadVR Proxy - using API key');
 
     const message = req.body && req.body.message ? req.body.message.trim() : '';
 
@@ -12,19 +9,18 @@ module.exports = async function (context, req) {
     }
 
     try {
+        // === PASTE YOUR API KEY HERE ===
+        const API_KEY = "8FpcVRioyCoyx0G0Ckc4CpAYjLlfQ99irTAnT33BVDw6o5iyU8gtJQQJ99CDACYeBjFXJ3w3AAAAACOGBRSW";   // ← Replace this line with your real key
+
         const PROJECT_ENDPOINT = "https://dadvr-foundry.services.ai.azure.com/api/projects/dadvr-chatbot";
         const agentName = "DadVRchatbot";
         const agentVersion = "3";
-
-        // Get token for Azure AI services
-        const tokenResponse = await credential.getToken("https://ai.azure.com/.default");
-        const token = tokenResponse.token;
 
         const response = await fetch(`${PROJECT_ENDPOINT}/responses?api-version=2025-05-01`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
+                'api-key': API_KEY
             },
             body: JSON.stringify({
                 input: [{ role: "user", content: message }],
@@ -40,7 +36,7 @@ module.exports = async function (context, req) {
 
         if (!response.ok) {
             const errorText = await response.text().catch(() => "");
-            throw new Error(`Agent API error ${response.status}: ${errorText}`);
+            throw new Error(`Agent failed: ${response.status} ${errorText}`);
         }
 
         const data = await response.json();
@@ -51,10 +47,10 @@ module.exports = async function (context, req) {
         context.res = { status: 200, body: { reply: reply } };
 
     } catch (err) {
-        context.log.error('Error calling agent:', err);
+        context.log.error('Agent call error:', err);
         context.res = {
             status: 200,
-            body: { reply: "Sorry, DadVRchatbot is having trouble responding right now.\n\nPlease try again." }
+            body: { reply: "Sorry, DadVRchatbot is having trouble responding right now.\n\nPlease try again in a moment." }
         };
     }
 };
