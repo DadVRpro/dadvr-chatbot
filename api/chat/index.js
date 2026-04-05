@@ -1,5 +1,5 @@
 module.exports = async function (context, req) {
-    context.log('DadVR Proxy - raw JSON mode');
+    context.log('DadVR Proxy - correct extraction');
 
     const message = req.body && req.body.message ? req.body.message.trim() : '';
 
@@ -37,15 +37,20 @@ module.exports = async function (context, req) {
 
         const data = await response.json();
 
-        // Return the full raw JSON so we can see the exact structure
-        const rawReply = JSON.stringify(data, null, 2);
+        // Correct path based on the raw JSON you just showed
+        let reply = "DadVRchatbot had no response.";
 
-        context.res = { 
-            status: 200, 
-            body: { 
-                reply: "Raw response from DadVRchatbot:\n\n" + rawReply 
-            } 
-        };
+        if (data.output && Array.isArray(data.output) && data.output.length > 0) {
+            const messageObj = data.output[0];
+            if (messageObj.content && Array.isArray(messageObj.content) && messageObj.content.length > 0) {
+                const contentItem = messageObj.content[0];
+                if (contentItem && contentItem.text) {
+                    reply = contentItem.text;
+                }
+            }
+        }
+
+        context.res = { status: 200, body: { reply: reply } };
 
     } catch (err) {
         context.log.error('Error:', err.message);
