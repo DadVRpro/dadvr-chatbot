@@ -1,6 +1,5 @@
-
 module.exports = async function (context, req) {
-    context.log('DadVR Proxy - final working version');
+    context.log('DadVR Proxy - final fix with model');
 
     const message = req.body && req.body.message ? req.body.message.trim() : '';
 
@@ -22,6 +21,7 @@ module.exports = async function (context, req) {
                 'api-key': API_KEY
             },
             body: JSON.stringify({
+                model: "gpt-4o",                                   // ← This was missing
                 input: [{ role: "user", content: message }],
                 extra_body: {
                     agent_reference: {
@@ -41,7 +41,7 @@ module.exports = async function (context, req) {
         const data = await response.json();
         const reply = data.output_text || 
                      (data.output && data.output[0] && data.output[0].content) || 
-                     "DadVRchatbot responded but had no text.";
+                     "DadVRchatbot had no response.";
 
         context.res = { status: 200, body: { reply: reply } };
 
