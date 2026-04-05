@@ -1,5 +1,8 @@
+const { DefaultAzureCredential } = require('@azure/identity');
+const credential = new DefaultAzureCredential();
+
 module.exports = async function (context, req) {
-    context.log('DadVR Proxy - calling real agent');
+    context.log('DadVR Proxy - calling real agent with credential');
 
     const message = req.body && req.body.message ? req.body.message.trim() : '';
 
@@ -11,13 +14,17 @@ module.exports = async function (context, req) {
     try {
         const PROJECT_ENDPOINT = "https://dadvr-foundry.services.ai.azure.com/api/projects/dadvr-chatbot";
         const agentName = "DadVRchatbot";
-        const agentVersion = "3";   // Change if your agent version is different
+        const agentVersion = "3";
+
+        // Get token for Azure AI services
+        const tokenResponse = await credential.getToken("https://ai.azure.com/.default");
+        const token = tokenResponse.token;
 
         const response = await fetch(`${PROJECT_ENDPOINT}/responses?api-version=2025-05-01`, {
             method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json'
-                // Note: In a real production setup, you would add Authorization header here using DefaultAzureCredential
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify({
                 input: [{ role: "user", content: message }],
@@ -32,25 +39,22 @@ module.exports = async function (context, req) {
         });
 
         if (!response.ok) {
-            const errorText = await response.text().catch(() => "No details");
-            context.log.error(`Agent API failed: ${response.status} - ${errorText}`);
-            throw new Error(`Status ${response.status}`);
+            const errorText = await response.text().catch(() => "");
+            throw new Error(`Agent API error ${response.status}: ${errorText}`);
         }
 
         const data = await response.json();
         const reply = data.output_text || 
                      (data.output && data.output[0] && data.output[0].content) || 
-                     "DadVRchatbot returned no text.";
+                     "DadVRchatbot had no response.";
 
         context.res = { status: 200, body: { reply: reply } };
 
     } catch (err) {
-        context.log.error('Full error calling DadVRchatbot:', err);
+        context.log.error('Error calling agent:', err);
         context.res = {
             status: 200,
-            body: { 
-                reply: `DadVRchatbot had trouble responding.\n\nError: ${err.message.substring(0, 100)}...` 
-            }
+            body: { reply: "Sorry, DadVRchatbot is having trouble responding right now.\n\nPlease try again." }
         };
     }
 };
